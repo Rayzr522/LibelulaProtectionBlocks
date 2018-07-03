@@ -1,7 +1,7 @@
 /*
  *            This file is part of  LibelulaProtectionBlocks.
  *
- *   LibelulaProtectionBlocks is free software: you can redistribute it and/or 
+ *   LibelulaProtectionBlocks is free software: you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -12,24 +12,13 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with  LibelulaProtectionBlocks. 
+ *  along with  LibelulaProtectionBlocks.
  *  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package me.libelula.pb;
 
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -40,17 +29,24 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
- *
  * @author Diego D'Onofrio <ddonofrio@member.fsf.org>
  */
 public class ProtectionStonesImporter {
 
+    private static final String regionIdRegexp
+            = "^ps(-?[0-9]+)x(-?[0-9]+)y(-?[0-9]+)z";
     private final Main plugin;
     private final Plugin oldPs;
     private final File migrationTest;
-    private static final String regionIdRegexp
-            = "^ps(-?[0-9]+)x(-?[0-9]+)y(-?[0-9]+)z";
     private final Pattern regex;
 
     public ProtectionStonesImporter(Main plugin) {

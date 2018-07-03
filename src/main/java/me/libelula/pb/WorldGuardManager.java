@@ -20,25 +20,26 @@ package me.libelula.pb;
 
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.RegionContainer;
-import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import org.bukkit.plugin.Plugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.Flag;
+import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Class WorldGuardManager of the wgPlugin.
@@ -49,11 +50,11 @@ import org.bukkit.entity.Player;
 public class WorldGuardManager {
 
     private final Main plugin;
-    private WorldGuardPlugin wgp;
-    private RegionContainer container;
     private final TextManager tm;
     private final TreeMap<Flag<?>, String> defaultKeys;
     private final TreeMap<World, RegionManager> regionManagers;
+    private WorldGuardPlugin wgp;
+    private RegionContainer container;
 
     public WorldGuardManager(Main plugin) {
         this.plugin = plugin;
@@ -64,23 +65,6 @@ public class WorldGuardManager {
 
     public FlagRegistry getFlagRegistry() {
         return wgp.getFlagRegistry();
-    }
-
-    public static class FlagComparator implements Comparator<Flag<?>> {
-
-        @Override
-        public int compare(Flag<?> o1, Flag<?> o2) {
-            return o1.toString().compareTo(o2.toString());
-        }
-    }
-
-    public static class WorldComparator implements Comparator<World> {
-
-        @Override
-        public int compare(World o1, World o2) {
-            return o1.getUID().compareTo(o2.getUID());
-        }
-
     }
 
     public boolean isWorldGuardActive() {
@@ -220,7 +204,7 @@ public class WorldGuardManager {
 
     @SuppressWarnings("unchecked")
     public void setFlag(final ProtectedRegion pr, final World world,
-            final Flag flag, final String value) {
+                        final Flag flag, final String value) {
         /*
          StateFlag.State state = null;
          switch (value.toLowerCase()) {
@@ -238,7 +222,7 @@ public class WorldGuardManager {
         // WG plugin commands. I hope to fix this one of those days...
         Bukkit.getScheduler().runTaskLater(plugin, () -> Bukkit.dispatchCommand(plugin.getConsole(),
                 "region flag -w " + world.getName() + " "
-                + pr.getId() + " " + flag.getName() + " " + value), 2);
+                        + pr.getId() + " " + flag.getName() + " " + value), 2);
 
     }
 
@@ -285,5 +269,22 @@ public class WorldGuardManager {
 
     public ProtectedRegion getPcr(World world, String id) {
         return regionManagers.get(world).getRegion(id);
+    }
+
+    public static class FlagComparator implements Comparator<Flag<?>> {
+
+        @Override
+        public int compare(Flag<?> o1, Flag<?> o2) {
+            return o1.toString().compareTo(o2.toString());
+        }
+    }
+
+    public static class WorldComparator implements Comparator<World> {
+
+        @Override
+        public int compare(World o1, World o2) {
+            return o1.getUID().compareTo(o2.getUID());
+        }
+
     }
 }

@@ -1,7 +1,7 @@
 /*
  *            This file is part of LibelulaProtectionBlocks.
  *
- *  LibelulaProtectionBlocks is free software: you can redistribute it and/or 
+ *  LibelulaProtectionBlocks is free software: you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -12,17 +12,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with LibelulaProtectionBlocks. 
+ *  along with LibelulaProtectionBlocks.
  *  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package me.libelula.pb;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,8 +26,13 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author Diego D'Onofrio <ddonofrio@member.fsf.org>
  */
 public class CommandManager implements CommandExecutor {
@@ -295,7 +295,7 @@ public class CommandManager implements CommandExecutor {
                             plugin.pm.removeAllPS(cs, args[1]);
                         } else {
                             plugin.sendMessage(cs, ChatColor.RED
-                                    + tm.getText("not_permission_this_command"));                            
+                                    + tm.getText("not_permission_this_command"));
                         }
                     }
                     break;
@@ -358,10 +358,10 @@ public class CommandManager implements CommandExecutor {
                 break;
             case "flag":
                 plugin.sendMessage(cs, ChatColor.RED
-                        + tm.getText("help_ps_flag"));                
+                        + tm.getText("help_ps_flag"));
                 plugin.sendMessage(cs, ChatColor.RED
                         + tm.getText("help_ps_flag_remove"));
-            // no break
+                // no break
             case "flag-list":
                 plugin.sendMessage(cs, ChatColor.RED
                         + tm.getText("help_ps_flag_list"));

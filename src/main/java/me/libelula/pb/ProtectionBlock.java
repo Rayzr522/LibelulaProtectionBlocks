@@ -1,7 +1,7 @@
 /*
  *            This file is part of  LibelulaProtectionBlocks.
  *
- *   LibelulaProtectionBlocks is free software: you can redistribute it and/or 
+ *   LibelulaProtectionBlocks is free software: you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -12,9 +12,9 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with  LibelulaProtectionBlocks. 
+ *  along with  LibelulaProtectionBlocks.
  *  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package me.libelula.pb;
 
@@ -32,12 +32,12 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- *
  * @author Diego D'Onofrio <ddonofrio@member.fsf.org>
  */
 public class ProtectionBlock implements Comparable<ProtectionBlock> {
 
     private final Main plugin;
+    private final TextManager tm;
     private boolean hidden;
     private boolean fence;
     private Location location;
@@ -56,12 +56,32 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
     private World world;
     private String regionId;
 
-    private final TextManager tm;
-
     public ProtectionBlock(Main plugin) {
         this.plugin = plugin;
         uuid = UUID.randomUUID();
         tm = plugin.tm;
+    }
+
+    public static boolean validateMaterial(Material mat) {
+        return !(!mat.isBlock() || !mat.isSolid()
+                || mat.hasGravity() || mat.isEdible()
+                || mat == Material.AIR
+                || mat == Material.DIRT
+                || mat == Material.GRASS
+                || mat == Material.ICE
+                || mat == Material.SNOW_BLOCK
+                || mat == Material.CACTUS
+                || mat == Material.PISTON_BASE
+                || mat == Material.PISTON_EXTENSION
+                || mat == Material.PISTON_MOVING_PIECE
+                || mat == Material.FURNACE
+                || mat == Material.MYCEL
+                || mat == Material.LEAVES
+                || mat == Material.LEAVES_2
+                || mat == Material.IRON_PLATE
+                || mat == Material.GOLD_PLATE
+                || mat == Material.SPONGE
+                || mat == Material.TNT);
     }
 
     @Override
@@ -81,8 +101,8 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         fence = active;
     }
 
-    public void setHidden(boolean hide) {
-        this.hidden = hide;
+    public Location getLocation() {
+        return location;
     }
 
     public void setLocation(Location location) {
@@ -101,14 +121,6 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         }
     }
 
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setRegion(ProtectedCuboidRegion region) {
-        this.region = region;
-    }
-
     public UUID getUuid() {
         return uuid;
     }
@@ -117,48 +129,44 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         return location != null;
     }
 
-    public void setItemStack(ItemStack itemStack) {
-        this.is = itemStack;
-    }
-
     public ItemStack getItemStack() {
         return is;
+    }
+
+    public void setItemStack(ItemStack itemStack) {
+        this.is = itemStack;
     }
 
     public Material getMaterial() {
         return is.getType();
     }
 
-    public void setPlayerUUID(UUID playerUUID) {
-        this.playerUUID = playerUUID;
-    }
-
     public Player getPlayer() {
         return Bukkit.getPlayer(playerUUID);
-    }
-
-    public void setSizeX(int sizeX) {
-        this.sizeX = sizeX;
-    }
-
-    public void setSizeY(int sizeY) {
-        this.sizeY = sizeY;
-    }
-
-    public void setSizeZ(int sizeZ) {
-        this.sizeZ = sizeZ;
     }
 
     public int getSizeX() {
         return sizeX;
     }
 
+    public void setSizeX(int sizeX) {
+        this.sizeX = sizeX;
+    }
+
     public int getSizeY() {
         return sizeY;
     }
 
+    public void setSizeY(int sizeY) {
+        this.sizeY = sizeY;
+    }
+
     public int getSizeZ() {
         return sizeZ;
+    }
+
+    public void setSizeZ(int sizeZ) {
+        this.sizeZ = sizeZ;
     }
 
     private void setBlockVectors() {
@@ -234,8 +242,16 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         return playerUUID;
     }
 
+    public void setPlayerUUID(UUID playerUUID) {
+        this.playerUUID = playerUUID;
+    }
+
     public ProtectedCuboidRegion getRegion() {
         return region;
+    }
+
+    public void setRegion(ProtectedCuboidRegion region) {
+        this.region = region;
     }
 
     public World getWorld() {
@@ -244,6 +260,10 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
 
     public boolean isHidden() {
         return hidden;
+    }
+
+    public void setHidden(boolean hide) {
+        this.hidden = hide;
     }
 
     public List<String> getInfo() {
@@ -303,28 +323,6 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
 
     public boolean hasFence() {
         return fence;
-    }
-
-    public static boolean validateMaterial(Material mat) {
-        return !(!mat.isBlock() || !mat.isSolid()
-                || mat.hasGravity() || mat.isEdible()
-                || mat == Material.AIR
-                || mat == Material.DIRT
-                || mat == Material.GRASS
-                || mat == Material.ICE
-                || mat == Material.SNOW_BLOCK
-                || mat == Material.CACTUS
-                || mat == Material.PISTON_BASE
-                || mat == Material.PISTON_EXTENSION
-                || mat == Material.PISTON_MOVING_PIECE
-                || mat == Material.FURNACE
-                || mat == Material.MYCEL
-                || mat == Material.LEAVES
-                || mat == Material.LEAVES_2
-                || mat == Material.IRON_PLATE
-                || mat == Material.GOLD_PLATE
-                || mat == Material.SPONGE
-                || mat == Material.TNT);
     }
 
     @SuppressWarnings("deprecation")

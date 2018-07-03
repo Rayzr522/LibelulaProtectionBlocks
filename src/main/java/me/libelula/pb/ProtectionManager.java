@@ -19,16 +19,7 @@
 package me.libelula.pb;
 
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -41,30 +32,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
- *
  * @author Diego D'Onofrio <ddonofrio@member.fsf.org>
  */
 public class ProtectionManager {
-
-    private class LocationComparator implements Comparator<Location> {
-
-        @Override
-        public int compare(Location o1, Location o2) {
-            int resp;
-            resp = o1.getWorld().getUID().compareTo(o2.getWorld().getUID());
-            if (resp == 0) {
-                resp = o1.getBlockX() - o2.getBlockX();
-                if (resp == 0) {
-                    resp = o1.getBlockY() - o2.getBlockY();
-                    if (resp == 0) {
-                        resp = o1.getBlockZ() - o2.getBlockZ();
-                    }
-                }
-            }
-            return resp;
-        }
-    }
 
     private final Main plugin;
     private final TextManager tm;
@@ -107,7 +83,7 @@ public class ProtectionManager {
     }
 
     public boolean createProtectionBlock(Player player,
-            int maxX, int maxY, int maxZ) {
+                                         int maxX, int maxY, int maxZ) {
         boolean result = true;
         ItemStack itemInHand = player.getItemInHand();
         if (ProtectionBlock.validateMaterial(itemInHand.getType())) {
@@ -134,7 +110,7 @@ public class ProtectionManager {
 
     @SuppressWarnings("deprecation")
     public ProtectionBlock generateBlock(Material material, MaterialData materialData,
-            String ownerName, int maxX, int maxY, int maxZ) {
+                                         String ownerName, int maxX, int maxY, int maxZ) {
         ProtectionBlock pb = new ProtectionBlock(plugin);
         ItemStack is;
         if (materialData != null) {
@@ -774,8 +750,8 @@ public class ProtectionManager {
                             + tm.getText("never_played", playerName));
                 } else {
                     if (getPbs(player) != null) {
-                    plugin.sendMessage(cs,
-                            tm.getText("removing_pbs", playerName));
+                        plugin.sendMessage(cs,
+                                tm.getText("removing_pbs", playerName));
 
                         TreeSet<ProtectionBlock> pbs = new TreeSet<>(getPbs(player));
                         if (pbs.isEmpty()) {
@@ -804,5 +780,24 @@ public class ProtectionManager {
 
     public Set<ProtectionBlock> getPbs(OfflinePlayer player) {
         return playersBlocks.get(player.getUniqueId());
+    }
+
+    private class LocationComparator implements Comparator<Location> {
+
+        @Override
+        public int compare(Location o1, Location o2) {
+            int resp;
+            resp = o1.getWorld().getUID().compareTo(o2.getWorld().getUID());
+            if (resp == 0) {
+                resp = o1.getBlockX() - o2.getBlockX();
+                if (resp == 0) {
+                    resp = o1.getBlockY() - o2.getBlockY();
+                    if (resp == 0) {
+                        resp = o1.getBlockZ() - o2.getBlockZ();
+                    }
+                }
+            }
+            return resp;
+        }
     }
 }
