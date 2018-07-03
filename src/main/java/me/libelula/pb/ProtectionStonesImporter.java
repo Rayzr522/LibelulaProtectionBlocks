@@ -149,7 +149,7 @@ public class ProtectionStonesImporter {
                                 pb.setLoreText(loreText);
                                 pb.setLocation(psLocation);
                                 pb.setHidden(!psLocation.getBlock().getType().equals(mat));
-                                plugin.pm.addPlacedPb(pb);
+                                plugin.pm.addPlacedBlock(pb);
                                 plugin.logTranslated("imported_ps_block", regionId);
 
                             }, nextRun);

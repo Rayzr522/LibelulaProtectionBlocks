@@ -48,21 +48,21 @@ public class EventManager implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) {
-        if (plugin.pm.isPB(e.getItemInHand())) {
+        if (plugin.pm.isProtectionBlock(e.getItemInHand())) {
             plugin.pm.placePb(e);
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
-        if (plugin.pm.isPB(e.getBlock())) {
-            plugin.pm.breakPb(e);
+        if (plugin.pm.isProtectionBlock(e.getBlock())) {
+            plugin.pm.breakProtectionBlock(e);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onItemDrop(ItemSpawnEvent e) {
-        if (plugin.pm.cancelDrop(e.getLocation())) {
+        if (plugin.pm.shouldCancelItemDrop(e.getLocation())) {
             e.setCancelled(true);
         }
     }

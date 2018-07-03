@@ -154,7 +154,7 @@ public class Shop {
             if (plugin.getEco().getBalance(player) < price) {
                 plugin.sendMessage(player,
                         ChatColor.RED + tm.getText("not_enough_money"));
-                plugin.pm.removePb(pb);
+                plugin.pm.removeBlock(pb);
             } else {
                 if (player.getInventory().addItem(pb.getItemStack()).isEmpty()) {
                     plugin.getEco().withdrawPlayer(player, price);
@@ -162,7 +162,7 @@ public class Shop {
                 } else {
                     plugin.sendMessage(player,
                             ChatColor.RED + tm.getText("not_inventory_space"));
-                    plugin.pm.removePb(pb);
+                    plugin.pm.removeBlock(pb);
                 }
             }
         });
