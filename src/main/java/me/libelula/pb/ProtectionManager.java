@@ -30,6 +30,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
+import com.sk89q.worldguard.protection.flags.registry.SimpleFlagRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -789,7 +792,7 @@ public class ProtectionManager {
                         @Override
                         public void run() {
                             plugin.getWG().setFlag(pb.getPcr(), pb.getWorld(),
-                                    DefaultFlag.fuzzyMatchFlag(flagName), value);
+                                    DefaultFlag.fuzzyMatchFlag(plugin.getWG().getFlagRegistry(), flagName), value);
                         }
                     });
                 }

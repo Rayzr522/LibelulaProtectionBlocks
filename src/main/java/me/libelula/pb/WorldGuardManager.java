@@ -1,7 +1,7 @@
 /*
  *            This file is part of  LibelulaProtectionBlocks.
  *
- *   LibelulaProtectionBlocks is free software: you can redistribute it and/or 
+ *   LibelulaProtectionBlocks is free software: you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -12,14 +12,15 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with  LibelulaProtectionBlocks. 
+ *  along with  LibelulaProtectionBlocks.
  *  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package me.libelula.pb;
 
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.RegionContainer;
+import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import org.bukkit.plugin.Plugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
@@ -59,6 +60,10 @@ public class WorldGuardManager {
         this.tm = plugin.tm;
         this.defaultKeys = new TreeMap<>(new FlagComparator());
         this.regionManagers = new TreeMap<>(new WorldComparator());
+    }
+
+    public FlagRegistry getFlagRegistry() {
+        return wgp.getFlagRegistry();
     }
 
     public static class FlagComparator implements Comparator<Flag<?>> {
@@ -131,13 +136,13 @@ public class WorldGuardManager {
                     switch (keyName) {
                         case "greeting":
                         case "farewell":
-                            defaultKeys.put(DefaultFlag.fuzzyMatchFlag(keyName),
+                            defaultKeys.put(DefaultFlag.fuzzyMatchFlag(getFlagRegistry(), keyName),
                                     tm.getText(cs.getString(keyName)));
                             break;
                         default:
-                            if (DefaultFlag.fuzzyMatchFlag(keyName) != null) {
+                            if (DefaultFlag.fuzzyMatchFlag(getFlagRegistry(), keyName) != null) {
 
-                                defaultKeys.put(DefaultFlag.fuzzyMatchFlag(keyName),
+                                defaultKeys.put(DefaultFlag.fuzzyMatchFlag(getFlagRegistry(), keyName),
                                         cs.getString(keyName));
 
                                 plugin.sendMessage(plugin.getConsole(), tm.getText("default_flag_set",
