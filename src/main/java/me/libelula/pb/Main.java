@@ -18,12 +18,6 @@
  */
 package me.libelula.pb;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -33,6 +27,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author Diego D'Onofrio <ddonofrio@member.fsf.org>
@@ -40,27 +41,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class Main extends JavaPlugin {
 
     private String prefix;
-    public final TextManager tm;
-    public final ProtectionManager pm;
-    private WorldGuardManager wg;
-    private final ConsoleCommandSender console;
-    private final CommandManager cm;
-    private final EventManager em;
-    private Economy eco;
-    public final Shop sh;
+    public final TextManager tm = new TextManager(this);
+    public final ProtectionManager pm = new ProtectionManager(this);
+    public final Shop sh = new Shop(this);
+    private final ConsoleCommandSender console = getServer().getConsoleSender();
+    private final CommandManager cm = new CommandManager(this);
+    private final EventManager em = new EventManager(this);
 
-    public Main() {
-        this.tm = new TextManager(this);
-        console = getServer().getConsoleSender();
-        cm = new CommandManager(this);
-        pm = new ProtectionManager(this);
-        em = new EventManager(this);
-        sh = new Shop(this);
-    }
+    private WorldGuardManager wg;
+    private Economy eco;
 
     @Override
     public void onEnable() {
-        final Main plugin = this;
         prefix = ChatColor.translateAlternateColorCodes('&',
                 getConfig().getString("prefix"));
         try {
@@ -68,15 +60,17 @@ public final class Main extends JavaPlugin {
         } catch (MalformedURLException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-        plugin.wg = new WorldGuardManager(plugin);
+
+        wg = new WorldGuardManager(this);
         wg.initialize();
+
         Bukkit.getScheduler().runTaskLater(this, () -> {
             ProtectionStonesImporter importer
-                    = new ProtectionStonesImporter(plugin);
+                    = new ProtectionStonesImporter(this);
             boolean tryToImport = false;
             if (importer.isOldPsActive()) {
                 importer.disableOldPs();
-                plugin.sendMessage(
+                sendMessage(
                         console, "&6Old fashioned plugin ProtectionStones found and disabled.");
                 tryToImport = true;
             }
@@ -88,62 +82,62 @@ public final class Main extends JavaPlugin {
                 sendMessage(console, "Default config.yml saved.");
             }
 
-            if (getConfig()
-                    .getInt("config-version") != 3) {
+            if (getConfig().getInt("config-version") != 3) {
                 prefix = "";
                 alert("The version of this plugin is incompatible with "
                         + "actual directory. You have to rename or erase "
                         + "LibelulaProtectionBlocks diretory from the plugin "
                         + "folder and restart your server.");
                 disable();
-            } else {
-                try {
-                    if (!wg.isWorldGuardActive()) {
-                        alert(tm.getText("wg_not_initialized"));
-                        disable();
-                    } else {
-                        cm.initialize();
-                        em.initialize();
-                        Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                                pm::initialize);
-                        if (!setupEconomy()) {
-                            alert(tm.getText("vault-plugin-not-loaded"));
-                        } else {
-                            sendMessage(getServer().getConsoleSender(),
-                                    tm.getText("vault-plugin-linked"));
-                            if (getConfig().getBoolean("shop.enable")) {
-                                sh.initialize();
-                                sendMessage(getServer().getConsoleSender(),
-                                        tm.getText("shop_enabled"));
-                            }
-                        }
-                    }
-                    if (getConfig().getBoolean("auto-save.enabled")
-                            && getConfig().getInt("auto-save.interval-minutes") > 0) {
-                        int tics = getConfig().
-                                getInt("auto-save.interval-minutes")
-                                * 20 * 60;
-                        Bukkit.getScheduler().runTaskTimerAsynchronously(
-                                plugin, () -> {
-                                    if (getConfig().getBoolean("auto-save.log-messages")) {
-                                        sendMessage(console, tm.getText("saving"));
-                                    }
-                                    pm.save();
-                                }, tics, tics);
-                        if (tryToImport) {
-                            if (importer.isImportNeeded()) {
-                                importer.importFromOldPS();
-                            } else {
-                                alert(tm.getText("old_ps_already_imported"));
-                            }
-                        }
-                    } else {
-                        alert(tm.getText("auto_save_disabled"));
-                    }
-                } catch (NoClassDefFoundError | IOException ex) {
-                    alert(tm.getText("unexpected_error", ex));
+                return;
+            }
+
+            try {
+                if (!wg.isWorldGuardActive()) {
+                    alert(tm.getText("wg_not_initialized"));
                     disable();
+                    return;
                 }
+
+                cm.initialize();
+                em.initialize();
+
+                Bukkit.getScheduler().runTaskAsynchronously(this, pm::initialize);
+
+                if (!setupEconomy()) {
+                    alert(tm.getText("vault-plugin-not-loaded"));
+                } else {
+                    sendMessage(getServer().getConsoleSender(),
+                            tm.getText("vault-plugin-linked"));
+                    if (getConfig().getBoolean("shop.enable")) {
+                        sh.initialize();
+                        sendMessage(getServer().getConsoleSender(),
+                                tm.getText("shop_enabled"));
+                    }
+                }
+
+                if (getConfig().getBoolean("auto-save.enabled") && getConfig().getInt("auto-save.interval-minutes") > 0) {
+                    int autoSaveInterval = getConfig().getInt("auto-save.interval-minutes") * 20 * 60;
+                    Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+                        if (getConfig().getBoolean("auto-save.log-messages")) {
+                            sendMessage(console, tm.getText("saving"));
+                        }
+                        pm.save();
+                    }, autoSaveInterval, autoSaveInterval);
+
+                    if (tryToImport) {
+                        if (importer.isImportNeeded()) {
+                            importer.importFromOldPS();
+                        } else {
+                            alert(tm.getText("old_ps_already_imported"));
+                        }
+                    }
+                } else {
+                    alert(tm.getText("auto_save_disabled"));
+                }
+            } catch (NoClassDefFoundError | IOException ex) {
+                alert(tm.getText("unexpected_error", ex));
+                disable();
             }
         }, 20);
     }
