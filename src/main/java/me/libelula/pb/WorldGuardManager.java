@@ -187,7 +187,7 @@ public class WorldGuardManager {
         final RegionManager regions = container.get(pb.getLocation().getWorld());
         if (regions != null) {
             Bukkit.getScheduler().runTask(plugin, () -> {
-                regions.addRegion(pb.getPcr());
+                regions.addRegion(pb.getRegion());
                 try {
                     regions.save();
                 } catch (StorageException ex) {
@@ -203,8 +203,8 @@ public class WorldGuardManager {
             final RegionManager regions = container.get(pb.getLocation().getWorld());
             if (regions != null) {
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (pb.getPcr() != null) {
-                        regions.removeRegion(pb.getPcr().getId());
+                    if (pb.getRegion() != null) {
+                        regions.removeRegion(pb.getRegion().getId());
                     }
                     pb.setLocation(null);
                     try {

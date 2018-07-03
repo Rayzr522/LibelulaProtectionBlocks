@@ -141,7 +141,7 @@ public class ProtectionStonesImporter {
                                 dtMeta.setDisplayName(pb.getName());
                                 is.setItemMeta(dtMeta);
                                 pb.setItemStack(is);
-                                pb.setPcr(pcr);
+                                pb.setRegion(pcr);
                                 pb.setSizeX(size);
                                 pb.setSizeY(size);
                                 pb.setSizeZ(size);
@@ -152,7 +152,7 @@ public class ProtectionStonesImporter {
 
                                 pb.setLoreText(loreText);
                                 pb.setLocation(psLocation);
-                                pb.setHiden(!psLocation.getBlock().getType().equals(mat));
+                                pb.setHidden(!psLocation.getBlock().getType().equals(mat));
                                 plugin.pm.addPlacedPb(pb);
                                 plugin.logTranslated("imported_ps_block", regionId);
 

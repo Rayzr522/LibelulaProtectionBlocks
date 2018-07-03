@@ -52,9 +52,9 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
     private String playerName;
     private List<String> loreText;
     private String name;
-    private ProtectedCuboidRegion pcr;
+    private ProtectedCuboidRegion region;
     private World world;
-    private String pcrId;
+    private String regionId;
 
     private final TextManager tm;
 
@@ -81,7 +81,7 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         fence = active;
     }
 
-    public void setHiden(boolean hide) {
+    public void setHidden(boolean hide) {
         this.hidden = hide;
     }
 
@@ -90,13 +90,13 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         if (location != null) {
             setBlockVectors();
             world = location.getWorld();
-            if (this.pcr == null) {
-                this.pcr = plugin.getWG().getProtectedRegion(this);
+            if (this.region == null) {
+                this.region = plugin.getWG().getProtectedRegion(this);
             }
         } else {
             max = null;
             min = null;
-            pcr = null;
+            region = null;
             world = null;
         }
     }
@@ -105,8 +105,8 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         return location;
     }
 
-    public void setPcr(ProtectedCuboidRegion pcr) {
-        this.pcr = pcr;
+    public void setRegion(ProtectedCuboidRegion region) {
+        this.region = region;
     }
 
     public UUID getUuid() {
@@ -181,10 +181,10 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
 
     public String getRegionName() {
         String result;
-        if (pcr != null) {
-            result = pcr.getId();
-        } else if (pcrId != null) {
-            result = pcrId;
+        if (region != null) {
+            result = region.getId();
+        } else if (regionId != null) {
+            result = regionId;
         } else {
             result = "lpb-" + location.getBlockX() + "x"
                     + location.getBlockY() + "y"
@@ -234,8 +234,8 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         return playerUUID;
     }
 
-    public ProtectedCuboidRegion getPcr() {
-        return pcr;
+    public ProtectedCuboidRegion getRegion() {
+        return region;
     }
 
     public World getWorld() {
@@ -254,18 +254,18 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
             result.add(tm.getText("pb_info_creator_text", loreText.get(0)));
             result.add(tm.getText("region_info_header", loreText.get(0)));
             result.add(tm.getText("region_info_title", getRegionName(),
-                    "" + pcr.getPriority()));
-            result.add(tm.getText("region_info_flags", pcr.getFlags().toString()));
-            if (!pcr.getOwners().getPlayerDomain().getPlayers().isEmpty()) {
+                    "" + region.getPriority()));
+            result.add(tm.getText("region_info_flags", region.getFlags().toString()));
+            if (!region.getOwners().getPlayerDomain().getPlayers().isEmpty()) {
                 result.add(tm.getText("region_info_owners",
-                        pcr.getOwners().getPlayers()));
+                        region.getOwners().getPlayers()));
             } else {
                 result.add(tm.getText("region_info_owners",
                         ChatColor.ITALIC + tm.getText("no_players")));
             }
-            if (!pcr.getMembers().getPlayers().isEmpty()) {
+            if (!region.getMembers().getPlayers().isEmpty()) {
                 result.add(tm.getText("region_info_members",
-                        pcr.getMembers().getPlayers()));
+                        region.getMembers().getPlayers()));
             } else {
                 result.add(tm.getText("region_info_members",
                         ChatColor.ITALIC + tm.getText("no_players")));
@@ -402,15 +402,15 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         }
     }
 
-    public void setPcrId(String pcrID) {
-        this.pcrId = pcrID;
+    public void setRegionId(String regionId) {
+        this.regionId = regionId;
     }
 
     public void removeRegion() {
         if (!hidden && location != null) {
             Bukkit.getScheduler().runTask(plugin, () -> location.getBlock().setType(Material.AIR));
         }
-        if (pcr != null) {
+        if (region != null) {
             plugin.getWG().removeRegion(this);
         }
     }

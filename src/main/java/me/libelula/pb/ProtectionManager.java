@@ -21,14 +21,7 @@ package me.libelula.pb;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.bukkit.Bukkit;
@@ -75,31 +68,21 @@ public class ProtectionManager {
 
     private final Main plugin;
     private final TextManager tm;
-    private final TreeSet<Material> materialsCache;
-    private final TreeMap<UUID, ProtectionBlock> uuidsCache;
-    private final TreeSet<ProtectionBlock> createdBlocks;
-    private final TreeMap<Location, ProtectionBlock> placedBlocks;
-    private final TreeMap<UUID, TreeSet<ProtectionBlock>> playersBlocks;
-    private final ReentrantLock _pb_mutex;
-    private final ItemStack air;
-    private final TreeMap<String, Integer> permissions;
-    private final TreeSet<Material> fenceReplaces;
+    private final Set<Material> materialsCache = new TreeSet<>();
+    private final Map<UUID, ProtectionBlock> uuidsCache = new TreeMap<>();
+    private final Set<ProtectionBlock> createdBlocks = new TreeSet<>();
+    private final Map<Location, ProtectionBlock> placedBlocks = new TreeMap<>(new LocationComparator());
+    private final Map<UUID, Set<ProtectionBlock>> playersBlocks = new TreeMap<>();
+    private final Map<String, Integer> permissions = new TreeMap<>();
+    private final Set<Material> fenceReplaces = new TreeSet<>();
+    private final Set<String> configurableFlags = new TreeSet<>();
+    private final ReentrantLock _pb_mutex = new ReentrantLock();
+    private final ItemStack air = new ItemStack(Material.AIR);
     private final File pbFile;
-    private final TreeSet<String> configurableFlags;
 
     public ProtectionManager(Main plugin) {
         this.plugin = plugin;
         tm = plugin.tm;
-        materialsCache = new TreeSet<>();
-        fenceReplaces = new TreeSet<>();
-        createdBlocks = new TreeSet<>();
-        placedBlocks = new TreeMap<>(new LocationComparator());
-        playersBlocks = new TreeMap<>();
-        permissions = new TreeMap<>();
-        uuidsCache = new TreeMap<>();
-        configurableFlags = new TreeSet<>();
-        _pb_mutex = new ReentrantLock();
-        air = new ItemStack(Material.AIR);
         pbFile = new File(plugin.getDataFolder(), "pb.yml");
     }
 
@@ -207,7 +190,7 @@ public class ProtectionManager {
             pb.setPlayerUUID(e.getPlayer().getUniqueId());
             pb.setPlayerName(e.getPlayer().getName());
             pb.setLocation(e.getBlock().getLocation());
-            if (plugin.getWG().overlapsUnownedRegion(pb.getPcr(),
+            if (plugin.getWG().overlapsUnownedRegion(pb.getRegion(),
                     e.getPlayer())) {
                 plugin.sendMessage(e.getPlayer(), ChatColor.RED
                         + tm.getText("overlaps"));
@@ -238,7 +221,7 @@ public class ProtectionManager {
         try {
             createdBlocks.remove(pb);
             placedBlocks.put(e.getBlock().getLocation(), pb);
-            TreeSet<ProtectionBlock> pbs
+            Set<ProtectionBlock> pbs
                     = playersBlocks.get(e.getPlayer().getUniqueId());
             if (pbs == null) {
                 pbs = new TreeSet<>();
@@ -267,7 +250,7 @@ public class ProtectionManager {
 
         final ProtectionBlock pb = placedBlocks.get(e.getBlock().getLocation());
         Player player = e.getPlayer();
-        if (!pb.getPcr().getOwners().contains(plugin.getWG().wrapPlayer(player))
+        if (!pb.getRegion().getOwners().contains(plugin.getWG().wrapPlayer(player))
                 && !e.getPlayer().hasPermission("pb.break.others")) {
             plugin.sendMessage(player, ChatColor.RED
                     + tm.getText("not_owned_by_you"));
@@ -374,8 +357,8 @@ public class ProtectionManager {
                         && oPb.getMax().getBlockX() >= pb.getLocation().getBlockX()
                         && oPb.getMax().getBlockY() >= pb.getLocation().getBlockY()
                         && oPb.getMax().getBlockZ() >= pb.getLocation().getBlockZ()) {
-                    if (pb.getPcr().getPriority() <= oPb.getPcr().getPriority()) {
-                        pb.getPcr().setPriority(oPb.getPcr().getPriority() + 1);
+                    if (pb.getRegion().getPriority() <= oPb.getRegion().getPriority()) {
+                        pb.getRegion().setPriority(oPb.getRegion().getPriority() + 1);
                     }
                 }
             }
@@ -395,7 +378,7 @@ public class ProtectionManager {
                     for (ProtectionBlock pbO : placedBlocks.values()) {
                         if (pbO.getPlayerUUID().equals(player.getUniqueId())
                                 || player.hasPermission("pb.addmember.others")) {
-                            if (pbO.getPcr().contains(player.getLocation().getBlockX(),
+                            if (pbO.getRegion().contains(player.getLocation().getBlockX(),
                                     player.getLocation().getBlockY(),
                                     player.getLocation().getBlockZ())) {
                                 pb = pbO;
@@ -411,7 +394,7 @@ public class ProtectionManager {
                             + tm.getText("not_in_your_parea"));
                 } else {
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        plugin.getWG().addMemberPlayer(pb.getPcr(), playerName);
+                        plugin.getWG().addMemberPlayer(pb.getRegion(), playerName);
                         plugin.sendMessage(player,
                                 tm.getText("player_member_added", playerName));
                     });
@@ -431,7 +414,7 @@ public class ProtectionManager {
                     for (ProtectionBlock pbO : placedBlocks.values()) {
                         if (pbO.getPlayerUUID().equals(player.getUniqueId())
                                 || player.hasPermission("pb.addmember.others")) {
-                            if (pbO.getPcr().contains(player.getLocation().getBlockX(),
+                            if (pbO.getRegion().contains(player.getLocation().getBlockX(),
                                     player.getLocation().getBlockY(),
                                     player.getLocation().getBlockZ())) {
                                 pb = pbO;
@@ -447,7 +430,7 @@ public class ProtectionManager {
                             + tm.getText("not_in_your_parea"));
                 } else {
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (plugin.getWG().delMemberPlayer(pb.getPcr(), playerName)) {
+                        if (plugin.getWG().delMemberPlayer(pb.getRegion(), playerName)) {
                             plugin.sendMessage(player,
                                     tm.getText("player_member_removed", playerName));
                         } else {
@@ -499,7 +482,7 @@ public class ProtectionManager {
                     for (ProtectionBlock pbO : placedBlocks.values()) {
                         if (pbO.getPlayerUUID().equals(player.getUniqueId())
                                 || player.hasPermission("pb.hide.others")) {
-                            if (pbO.getPcr().contains(player.getLocation().getBlockX(),
+                            if (pbO.getRegion().contains(player.getLocation().getBlockX(),
                                     player.getLocation().getBlockY(),
                                     player.getLocation().getBlockZ())) {
                                 pb = pbO;
@@ -519,7 +502,7 @@ public class ProtectionManager {
                             plugin.sendMessage(player, ChatColor.RED
                                     + tm.getText("pb_is_already_hidden"));
                         } else {
-                            pb.setHiden(true);
+                            pb.setHidden(true);
                             pb.getLocation().getBlock().setType(Material.AIR);
                         }
                     });
@@ -540,7 +523,7 @@ public class ProtectionManager {
                     for (ProtectionBlock pbO : placedBlocks.values()) {
                         if (pbO.getPlayerUUID().equals(player.getUniqueId())
                                 || player.hasPermission("pb.hide.others")) {
-                            if (pbO.getPcr().contains(player.getLocation().getBlockX(),
+                            if (pbO.getRegion().contains(player.getLocation().getBlockX(),
                                     player.getLocation().getBlockY(),
                                     player.getLocation().getBlockZ())) {
                                 pb = pbO;
@@ -564,7 +547,7 @@ public class ProtectionManager {
                                         tm.getText("use_force_modifier"));
                             }
                         } else {
-                            pb.setHiden(false);
+                            pb.setHidden(false);
                             pb.getLocation().getBlock().setTypeIdAndData(pb.getMaterial().getId(),
                                     pb.getItemStack().getData().getData(), false);
                         }
@@ -585,7 +568,7 @@ public class ProtectionManager {
                     for (ProtectionBlock pbO : placedBlocks.values()) {
                         if (pbO.getPlayerUUID().equals(player.getUniqueId())
                                 || player.hasPermission("pb.info.others")) {
-                            if (pbO.getPcr().contains(player.getLocation().getBlockX(),
+                            if (pbO.getRegion().contains(player.getLocation().getBlockX(),
                                     player.getLocation().getBlockY(),
                                     player.getLocation().getBlockZ())) {
                                 pb = pbO;
@@ -677,7 +660,7 @@ public class ProtectionManager {
                                 uuidsCache.put(pb.getUuid(), pb);
                                 createdBlocks.add(pb);
                                 if (pb.getPlayerUUID() != null) {
-                                    TreeSet<ProtectionBlock> playerPbs = playersBlocks.get(pb.getPlayerUUID());
+                                    Set<ProtectionBlock> playerPbs = playersBlocks.get(pb.getPlayerUUID());
                                     if (playerPbs == null) {
                                         playerPbs = new TreeSet<>();
                                     }
@@ -691,12 +674,12 @@ public class ProtectionManager {
                             for (String pbLocationString : yc.getConfigurationSection("placed")
                                     .getKeys(false)) {
                                 ProtectionBlock pb = new ProtectionBlock(plugin);
-                                pb.setPcrId(pbLocationString);
+                                pb.setRegionId(pbLocationString);
                                 pb.load(yc.getConfigurationSection("placed." + pbLocationString));
                                 materialsCache.add(pb.getMaterial());
                                 uuidsCache.put(pb.getUuid(), pb);
                                 placedBlocks.put(pb.getLocation(), pb);
-                                TreeSet<ProtectionBlock> playerPbs = playersBlocks.get(pb.getPlayerUUID());
+                                Set<ProtectionBlock> playerPbs = playersBlocks.get(pb.getPlayerUUID());
                                 if (playerPbs == null) {
                                     playerPbs = new TreeSet<>();
                                 }
@@ -718,7 +701,7 @@ public class ProtectionManager {
         }
     }
 
-    public TreeSet<String> getConfigurableFlags() {
+    public Set<String> getConfigurableFlags() {
         return configurableFlags;
     }
 
@@ -733,7 +716,7 @@ public class ProtectionManager {
                     for (ProtectionBlock pbO : placedBlocks.values()) {
                         if (pbO.getPlayerUUID().equals(player.getUniqueId())
                                 || player.hasPermission("pb.pb.modifyflags.others")) {
-                            if (pbO.getPcr().contains(player.getLocation().getBlockX(),
+                            if (pbO.getRegion().contains(player.getLocation().getBlockX(),
                                     player.getLocation().getBlockY(),
                                     player.getLocation().getBlockZ())) {
                                 pb = pbO;
@@ -748,7 +731,7 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getWG().setFlag(pb.getPcr(), pb.getWorld(),
+                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getWG().setFlag(pb.getRegion(), pb.getWorld(),
                             DefaultFlag.fuzzyMatchFlag(plugin.getWG().getFlagRegistry(), flagName), value));
                 }
             }
@@ -761,7 +744,7 @@ public class ProtectionManager {
             materialsCache.add(pb.getMaterial());
             uuidsCache.put(pb.getUuid(), pb);
             placedBlocks.put(pb.getLocation(), pb);
-            TreeSet<ProtectionBlock> playerPbs = playersBlocks.get(pb.getPlayerUUID());
+            Set<ProtectionBlock> playerPbs = playersBlocks.get(pb.getPlayerUUID());
             if (playerPbs == null) {
                 playerPbs = new TreeSet<>();
             }
@@ -773,7 +756,7 @@ public class ProtectionManager {
         }
     }
 
-    public TreeMap<UUID, TreeSet<ProtectionBlock>> getPlayersBlocks() {
+    public Map<UUID, Set<ProtectionBlock>> getPlayersBlocks() {
         return playersBlocks;
     }
 
@@ -815,11 +798,11 @@ public class ProtectionManager {
 
     }
 
-    public TreeSet<ProtectionBlock> getPbs(Player player) {
+    public Set<ProtectionBlock> getPbs(Player player) {
         return playersBlocks.get(player.getUniqueId());
     }
 
-    public TreeSet<ProtectionBlock> getPbs(OfflinePlayer player) {
+    public Set<ProtectionBlock> getPbs(OfflinePlayer player) {
         return playersBlocks.get(player.getUniqueId());
     }
 }
