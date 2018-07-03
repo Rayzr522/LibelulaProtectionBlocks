@@ -1,7 +1,7 @@
 /*
  *            This file is part of  LibelulaProtectionBlocks.
  *
- *   LibelulaProtectionBlocks is free software: you can redistribute it and/or 
+ *   LibelulaProtectionBlocks is free software: you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
@@ -12,9 +12,9 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with  LibelulaProtectionBlocks. 
+ *  along with  LibelulaProtectionBlocks.
  *  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package me.libelula.pb;
 
@@ -31,8 +31,6 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import com.sk89q.worldguard.protection.flags.registry.SimpleFlagRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -192,50 +190,44 @@ public class ProtectionManager {
     }
 
     private void revertPlacedPb(final ProtectionBlock pb, final BlockPlaceEvent e) {
-        Bukkit.getScheduler().runTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                e.getPlayer().setItemInHand(pb.getItemStack());
-                e.getBlock().setType(Material.AIR);
-                pb.setLocation(null);
-            }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            e.getPlayer().setItemInHand(pb.getItemStack());
+            e.getBlock().setType(Material.AIR);
+            pb.setLocation(null);
         });
     }
 
     public void placePb(final BlockPlaceEvent e) {
         e.getPlayer().setItemInHand(air);
         final List<String> lore = e.getItemInHand().getItemMeta().getLore();
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-            @Override
-            public void run() {
-                String uuidString = lore.get(1).concat("-")
-                        .concat(lore.get(2));
-                ProtectionBlock pb = getPb(UUID.fromString(uuidString));
-                pb.setPlayerUUID(e.getPlayer().getUniqueId());
-                pb.setPlayerName(e.getPlayer().getName());
-                pb.setLocation(e.getBlock().getLocation());
-                if (plugin.getWG().overlapsUnownedRegion(pb.getPcr(),
-                        e.getPlayer())) {
-                    plugin.sendMessage(e.getPlayer(), ChatColor.RED
-                            + tm.getText("overlaps"));
-                    revertPlacedPb(pb, e);
-                } else if (!e.getPlayer().hasPermission("pb.place")) {
-                    plugin.sendMessage(e.getPlayer(), ChatColor.RED
-                            + tm.getText("not_permission_active_pb"));
-                    revertPlacedPb(pb, e);
-                } else if (!e.getPlayer().hasPermission("pb.protection.unlimited")
-                        && playersBlocks.get(e.getPlayer().getUniqueId()) != null) {
-                    int playerBlocks = playersBlocks.get(e.getPlayer().getUniqueId()).size();
-                    if (getMaxProtections(e.getPlayer()) > playerBlocks) {
-                        placePb(pb, e);
-                    } else {
-                        plugin.sendMessage(e.getPlayer(), ChatColor.RED
-                                + tm.getText("over_pb_limit"));
-                        revertPlacedPb(pb, e);
-                    }
-                } else {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String uuidString = lore.get(1).concat("-")
+                    .concat(lore.get(2));
+            ProtectionBlock pb = getPb(UUID.fromString(uuidString));
+            pb.setPlayerUUID(e.getPlayer().getUniqueId());
+            pb.setPlayerName(e.getPlayer().getName());
+            pb.setLocation(e.getBlock().getLocation());
+            if (plugin.getWG().overlapsUnownedRegion(pb.getPcr(),
+                    e.getPlayer())) {
+                plugin.sendMessage(e.getPlayer(), ChatColor.RED
+                        + tm.getText("overlaps"));
+                revertPlacedPb(pb, e);
+            } else if (!e.getPlayer().hasPermission("pb.place")) {
+                plugin.sendMessage(e.getPlayer(), ChatColor.RED
+                        + tm.getText("not_permission_active_pb"));
+                revertPlacedPb(pb, e);
+            } else if (!e.getPlayer().hasPermission("pb.protection.unlimited")
+                    && playersBlocks.get(e.getPlayer().getUniqueId()) != null) {
+                int playerBlocks = playersBlocks.get(e.getPlayer().getUniqueId()).size();
+                if (getMaxProtections(e.getPlayer()) > playerBlocks) {
                     placePb(pb, e);
+                } else {
+                    plugin.sendMessage(e.getPlayer(), ChatColor.RED
+                            + tm.getText("over_pb_limit"));
+                    revertPlacedPb(pb, e);
                 }
+            } else {
+                placePb(pb, e);
             }
         });
     }
@@ -279,12 +271,9 @@ public class ProtectionManager {
                 && !e.getPlayer().hasPermission("pb.break.others")) {
             plugin.sendMessage(player, ChatColor.RED
                     + tm.getText("not_owned_by_you"));
-            Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    e.getBlock().setType(pb.getMaterial());
-                    e.getBlock().setData(pb.getItemStack().getData().getData());
-                }
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                e.getBlock().setType(pb.getMaterial());
+                e.getBlock().setData(pb.getItemStack().getData().getData());
             });
         } else {
             HashMap<Integer, ItemStack> remaining
@@ -292,12 +281,9 @@ public class ProtectionManager {
             if (remaining.size() > 0) {
                 plugin.sendMessage(player, ChatColor.RED
                         + tm.getText("not_inventory_space"));
-                Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        e.getBlock().setType(pb.getMaterial());
-                        e.getBlock().setData(pb.getItemStack().getData().getData());
-                    }
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    e.getBlock().setType(pb.getMaterial());
+                    e.getBlock().setData(pb.getItemStack().getData().getData());
                 });
             } else {
                 removePb(pb);
@@ -331,19 +317,12 @@ public class ProtectionManager {
     }
 
     private void generateWgRegion(final ProtectionBlock pb) {
-        Bukkit.getScheduler().runTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                plugin.getWG().createRegion(pb);
-            }
-        });
+        Bukkit.getScheduler().runTask(plugin, () -> plugin.getWG().createRegion(pb));
     }
 
     public boolean isPB(Block block) {
         boolean result = false;
-        if (!materialsCache.contains(block.getType())) {
-            result = false;
-        } else {
+        if (materialsCache.contains(block.getType())) {
             if (placedBlocks.containsKey(block.getLocation())) {
                 result = true;
             }
@@ -366,9 +345,7 @@ public class ProtectionManager {
 
     public boolean isPB(ItemStack is) {
         boolean result = false;
-        if (!materialsCache.contains(is.getType())) {
-            result = false;
-        } else {
+        if (materialsCache.contains(is.getType())) {
             List<String> lore = is.getItemMeta().getLore();
             if (lore != null && lore.size() >= 3) {
                 String uuidString = lore.get(1).concat("-").concat(lore.get(2));
@@ -433,13 +410,10 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            plugin.getWG().addMemberPlayer(pb.getPcr(), playerName);
-                            plugin.sendMessage(player,
-                                    tm.getText("player_member_added", playerName));
-                        }
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        plugin.getWG().addMemberPlayer(pb.getPcr(), playerName);
+                        plugin.sendMessage(player,
+                                tm.getText("player_member_added", playerName));
                     });
                 }
             }
@@ -472,16 +446,13 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            if (plugin.getWG().delMemberPlayer(pb.getPcr(), playerName)) {
-                                plugin.sendMessage(player,
-                                        tm.getText("player_member_removed", playerName));
-                            } else {
-                                plugin.sendMessage(player,
-                                        tm.getText("player_member_not_a_member", playerName));
-                            }
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (plugin.getWG().delMemberPlayer(pb.getPcr(), playerName)) {
+                            plugin.sendMessage(player,
+                                    tm.getText("player_member_removed", playerName));
+                        } else {
+                            plugin.sendMessage(player,
+                                    tm.getText("player_member_not_a_member", playerName));
                         }
                     });
                 }
@@ -543,16 +514,13 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            if (pb.isHidden()) {
-                                plugin.sendMessage(player, ChatColor.RED
-                                        + tm.getText("pb_is_already_hidden"));
-                            } else {
-                                pb.setHiden(true);
-                                pb.getLocation().getBlock().setType(Material.AIR);
-                            }
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (pb.isHidden()) {
+                            plugin.sendMessage(player, ChatColor.RED
+                                    + tm.getText("pb_is_already_hidden"));
+                        } else {
+                            pb.setHiden(true);
+                            pb.getLocation().getBlock().setType(Material.AIR);
                         }
                     });
                 }
@@ -587,21 +555,18 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            if (!pb.isHidden() && !force) {
-                                plugin.sendMessage(player, ChatColor.RED
-                                        + tm.getText("pb_is_already_visible"));
-                                if (player.hasPermission("pb.unhide.force")) {
-                                    plugin.sendMessage(player,
-                                            tm.getText("use_force_modifier"));
-                                }
-                            } else {
-                                pb.setHiden(false);
-                                pb.getLocation().getBlock().setTypeIdAndData(pb.getMaterial().getId(),
-                                        pb.getItemStack().getData().getData(), false);
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (!pb.isHidden() && !force) {
+                            plugin.sendMessage(player, ChatColor.RED
+                                    + tm.getText("pb_is_already_visible"));
+                            if (player.hasPermission("pb.unhide.force")) {
+                                plugin.sendMessage(player,
+                                        tm.getText("use_force_modifier"));
                             }
+                        } else {
+                            pb.setHiden(false);
+                            pb.getLocation().getBlock().setTypeIdAndData(pb.getMaterial().getId(),
+                                    pb.getItemStack().getData().getData(), false);
                         }
                     });
                 }
@@ -635,12 +600,7 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            plugin.sendMessage(player, pb.getInfo());
-                        }
-                    });
+                    Bukkit.getScheduler().runTask(plugin, () -> plugin.sendMessage(player, pb.getInfo()));
                 }
             }
         });
@@ -788,13 +748,8 @@ public class ProtectionManager {
                     plugin.sendMessage(player, ChatColor.RED
                             + tm.getText("not_in_your_parea"));
                 } else {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            plugin.getWG().setFlag(pb.getPcr(), pb.getWorld(),
-                                    DefaultFlag.fuzzyMatchFlag(plugin.getWG().getFlagRegistry(), flagName), value);
-                        }
-                    });
+                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getWG().setFlag(pb.getPcr(), pb.getWorld(),
+                            DefaultFlag.fuzzyMatchFlag(plugin.getWG().getFlagRegistry(), flagName), value));
                 }
             }
         });
@@ -836,11 +791,10 @@ public class ProtectionManager {
                             + tm.getText("never_played", playerName));
                 } else {
                     if (getPbs(player) != null) {
-                    plugin.sendMessage(cs, 
+                    plugin.sendMessage(cs,
                             tm.getText("removing_pbs", playerName));
-                        
-                        TreeSet<ProtectionBlock> pbs = new TreeSet<>();
-                        pbs.addAll(getPbs(player));
+
+                        TreeSet<ProtectionBlock> pbs = new TreeSet<>(getPbs(player));
                         if (pbs.isEmpty()) {
                             plugin.sendMessage(cs, ChatColor.RED
                                     + tm.getText("has_no_pbs", playerName));

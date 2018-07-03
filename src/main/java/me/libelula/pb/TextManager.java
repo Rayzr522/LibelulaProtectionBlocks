@@ -35,7 +35,6 @@ import org.bukkit.ChatColor;
 public class TextManager {
 
     private final Main plugin;
-    private Locale currentLocale;
     private ResourceBundle messages;
 
     public TextManager(Main plugin) {
@@ -45,7 +44,7 @@ public class TextManager {
     public void initialize() throws MalformedURLException {
         String lang = plugin.getConfig().getString("lang");
         String country = plugin.getConfig().getString("country");
-        currentLocale = new Locale(lang, country);
+        Locale currentLocale = new Locale(lang, country);
         File i18nFolder;
         i18nFolder = new File(plugin.getDataFolder(), "lang");
         if (!i18nFolder.exists()) {

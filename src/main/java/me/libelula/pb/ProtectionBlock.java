@@ -20,19 +20,16 @@ package me.libelula.pb;
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -290,15 +287,12 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
                     final Location loc = new Location(world, X, location.getBlockY(), Z);
                     final Location locMax = new Location(world, X, location.getBlockY() + 1, Z);
                     tic++;
-                    Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            if (plugin.pm.fenceCanReplace(loc.getBlock().getType())) {
-                                loc.getBlock().setType(Material.FENCE);
-                            } else if (plugin.pm.fenceCanReplace(
-                                    locMax.getBlock().getType())) {
-                                locMax.getBlock().setType(Material.FENCE);
-                            }
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (plugin.pm.fenceCanReplace(loc.getBlock().getType())) {
+                            loc.getBlock().setType(Material.FENCE);
+                        } else if (plugin.pm.fenceCanReplace(
+                                locMax.getBlock().getType())) {
+                            locMax.getBlock().setType(Material.FENCE);
                         }
                     }, tic);
 
@@ -402,9 +396,7 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
         }
         Material mat = Material.getMaterial(cs.getString("item.material"));
         if (mat != null) {
-            ItemStack isAux = new ItemStack(mat, 1, (short) 0,
-                    (byte) cs.getInt("item.data"));
-            this.is = isAux;
+            this.is = new ItemStack(mat, 1, (short) 0, (byte) cs.getInt("item.data"));
             setLoreText(cs.getStringList("item.lore"));
             is.getItemMeta().setDisplayName("name");
         }
@@ -416,12 +408,7 @@ public class ProtectionBlock implements Comparable<ProtectionBlock> {
 
     public void removeRegion() {
         if (!hidden && location != null) {
-            Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    location.getBlock().setType(Material.AIR);
-                }
-            });
+            Bukkit.getScheduler().runTask(plugin, () -> location.getBlock().setType(Material.AIR));
         }
         if (pcr != null) {
             plugin.getWG().removeRegion(this);

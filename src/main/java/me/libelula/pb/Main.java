@@ -70,90 +70,79 @@ public final class Main extends JavaPlugin {
         }
         plugin.wg = new WorldGuardManager(plugin);
         wg.initialize();
-        Bukkit.getScheduler().runTaskLater(this, new Runnable() {
-            @Override
-            public void run() {
-                ProtectionStonesImporter importer
-                        = new ProtectionStonesImporter(plugin);
-                boolean tryToImport = false;
-                if (importer.isOldPsActive()) {
-                    importer.disableOldPs();
-                    plugin.sendMessage(
-                            console, "&6Old fashioned plugin ProtectionStones found and disabled.");
-                    tryToImport = true;
-                }
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            ProtectionStonesImporter importer
+                    = new ProtectionStonesImporter(plugin);
+            boolean tryToImport = false;
+            if (importer.isOldPsActive()) {
+                importer.disableOldPs();
+                plugin.sendMessage(
+                        console, "&6Old fashioned plugin ProtectionStones found and disabled.");
+                tryToImport = true;
+            }
 
-                File configFile = new File(getDataFolder(), "config.yml");
+            File configFile = new File(getDataFolder(), "config.yml");
 
-                if (!configFile.exists()) {
-                    saveResource("config.yml", true);
-                    sendMessage(console, "Default config.yml saved.");
-                }
+            if (!configFile.exists()) {
+                saveResource("config.yml", true);
+                sendMessage(console, "Default config.yml saved.");
+            }
 
-                if (getConfig()
-                        .getInt("config-version") != 3) {
-                    prefix = "";
-                    alert("The version of this plugin is incompatible with "
-                            + "actual directory. You have to rename or erase "
-                            + "LibelulaProtectionBlocks diretory from the plugin "
-                            + "folder and restart your server.");
-                    disable();
-                } else {
-                    try {
-                        if (!wg.isWorldGuardActive()) {
-                            alert(tm.getText("wg_not_initialized"));
-                            disable();
-                        } else {
-                            cm.initialize();
-                            em.initialize();
-                            Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                                    new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            pm.initialize();
-                                        }
-                                    });
-                            if (!setupEconomy()) {
-                                alert(tm.getText("vault-plugin-not-loaded"));
-                            } else {
-                                sendMessage(getServer().getConsoleSender(),
-                                        tm.getText("vault-plugin-linked"));
-                                if (getConfig().getBoolean("shop.enable")) {
-                                    sh.initialize();
-                                    sendMessage(getServer().getConsoleSender(),
-                                            tm.getText("shop_enabled"));
-                                }
-                            }
-                        }
-                        if (getConfig().getBoolean("auto-save.enabled")
-                                && getConfig().getInt("auto-save.interval-minutes") > 0) {
-                            int tics = getConfig().
-                                    getInt("auto-save.interval-minutes")
-                                    * 20 * 60;
-                            Bukkit.getScheduler().runTaskTimerAsynchronously(
-                                    plugin, new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (getConfig().getBoolean("auto-save.log-messages")) {
-                                                sendMessage(console, tm.getText("saving"));
-                                            }
-                                            pm.save();
-                                        }
-                                    }, tics, tics);
-                            if (tryToImport) {
-                                if (importer.isImportNeeded()) {
-                                    importer.importFromOldPS();
-                                } else {
-                                    alert(tm.getText("old_ps_already_imported"));
-                                }
-                            }
-                        } else {
-                            alert(tm.getText("auto_save_disabled"));
-                        }
-                    } catch (NoClassDefFoundError | IOException ex) {
-                        alert(tm.getText("unexpected_error", ex));
+            if (getConfig()
+                    .getInt("config-version") != 3) {
+                prefix = "";
+                alert("The version of this plugin is incompatible with "
+                        + "actual directory. You have to rename or erase "
+                        + "LibelulaProtectionBlocks diretory from the plugin "
+                        + "folder and restart your server.");
+                disable();
+            } else {
+                try {
+                    if (!wg.isWorldGuardActive()) {
+                        alert(tm.getText("wg_not_initialized"));
                         disable();
+                    } else {
+                        cm.initialize();
+                        em.initialize();
+                        Bukkit.getScheduler().runTaskAsynchronously(plugin,
+                                pm::initialize);
+                        if (!setupEconomy()) {
+                            alert(tm.getText("vault-plugin-not-loaded"));
+                        } else {
+                            sendMessage(getServer().getConsoleSender(),
+                                    tm.getText("vault-plugin-linked"));
+                            if (getConfig().getBoolean("shop.enable")) {
+                                sh.initialize();
+                                sendMessage(getServer().getConsoleSender(),
+                                        tm.getText("shop_enabled"));
+                            }
+                        }
                     }
+                    if (getConfig().getBoolean("auto-save.enabled")
+                            && getConfig().getInt("auto-save.interval-minutes") > 0) {
+                        int tics = getConfig().
+                                getInt("auto-save.interval-minutes")
+                                * 20 * 60;
+                        Bukkit.getScheduler().runTaskTimerAsynchronously(
+                                plugin, () -> {
+                                    if (getConfig().getBoolean("auto-save.log-messages")) {
+                                        sendMessage(console, tm.getText("saving"));
+                                    }
+                                    pm.save();
+                                }, tics, tics);
+                        if (tryToImport) {
+                            if (importer.isImportNeeded()) {
+                                importer.importFromOldPS();
+                            } else {
+                                alert(tm.getText("old_ps_already_imported"));
+                            }
+                        }
+                    } else {
+                        alert(tm.getText("auto_save_disabled"));
+                    }
+                } catch (NoClassDefFoundError | IOException ex) {
+                    alert(tm.getText("unexpected_error", ex));
+                    disable();
                 }
             }
         }, 20);
@@ -183,12 +172,7 @@ public final class Main extends JavaPlugin {
             prefix = "";
         }
         if (isEnabled()) {
-            Bukkit.getScheduler().runTaskLater(this, new Runnable() {
-                @Override
-                public void run() {
-                    cs.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', message));
-                }
-            }, later);
+            Bukkit.getScheduler().runTaskLater(this, () -> cs.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', message)), later);
         } else {
             cs.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', message));
         }
@@ -237,19 +221,16 @@ public final class Main extends JavaPlugin {
     }
 
     public void reloadLocalConfig() {
-        Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
-            @Override
-            public void run() {
-                if (tm.isInitialized()) {
-                    sendMessage(console, tm.getText("reloading_config"));
-                }
-                if (getWG() != null) {
-                    getWG().reloadConfig();
-                    pm.load();
-                }
-                if (tm.isInitialized()) {
-                    alert(ChatColor.YELLOW + tm.getText("config_reloaded"));
-                }
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            if (tm.isInitialized()) {
+                sendMessage(console, tm.getText("reloading_config"));
+            }
+            if (getWG() != null) {
+                getWG().reloadConfig();
+                pm.load();
+            }
+            if (tm.isInitialized()) {
+                alert(ChatColor.YELLOW + tm.getText("config_reloaded"));
             }
         });
     }

@@ -46,34 +46,31 @@ public class Shop {
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
         public void onSignEdit(final SignChangeEvent e) {
             final Player player = e.getPlayer();
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    final Sign sign = (Sign) e.getBlock().getState();
-                    SignShop signShop = parseSign(e.getLines());
-                    if (signShop.isShop()) {
-                        if (!player.hasPermission("pb.shop.create")) {
-                            plugin.sendMessage(player, ChatColor.RED
-                                    + tm.getText("create_shop_no_perms"));
-                            strike(sign, 0);
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                final Sign sign = (Sign) e.getBlock().getState();
+                SignShop signShop = parseSign(e.getLines());
+                if (signShop.isShop()) {
+                    if (!player.hasPermission("pb.shop.create")) {
+                        plugin.sendMessage(player, ChatColor.RED
+                                + tm.getText("create_shop_no_perms"));
+                        strike(sign, 0);
+                    } else {
+                        if (signShop.isValid()) {
+                            updateSignShop(signShop, sign);
+                            plugin.sendMessage(player, tm.getText("shop_created"));
                         } else {
-                            if (signShop.isValid()) {
-                                updateSignShop(signShop, sign);
-                                plugin.sendMessage(player, tm.getText("shop_created"));
-                            } else {
-                                plugin.sendMessage(player, ChatColor.RED
-                                        + tm.getText("shop_not_valid"));
-                                if (signShop.sizeX == null
-                                        || signShop.sizeY == null
-                                        || signShop.sizeZ == null) {
-                                    strike(sign, 1);
-                                }
-                                if (signShop.price == null) {
-                                    strike(sign, 2);
-                                }
-                                if (signShop.material == null) {
-                                    strike(sign, 3);
-                                }
+                            plugin.sendMessage(player, ChatColor.RED
+                                    + tm.getText("shop_not_valid"));
+                            if (signShop.sizeX == null
+                                    || signShop.sizeY == null
+                                    || signShop.sizeZ == null) {
+                                strike(sign, 1);
+                            }
+                            if (signShop.price == null) {
+                                strike(sign, 2);
+                            }
+                            if (signShop.material == null) {
+                                strike(sign, 3);
                             }
                         }
                     }
@@ -83,22 +80,19 @@ public class Shop {
 
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
         public void onPlayerUse(final PlayerInteractEvent event) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                        if (event.getClickedBlock().getType() == Material.WALL_SIGN
-                                || event.getClickedBlock().getType() == Material.SIGN_POST) {
-                            Sign sign = (Sign) event.getClickedBlock().getState();
-                            SignShop signShop = parseSign(sign.getLines());
-                            if (signShop.isValid()) {
-                                ProtectionBlock pb = plugin.pm.generateBlock(
-                                        signShop.material,
-                                        null, ownerName, signShop.sizeX,
-                                        signShop.sizeY, signShop.sizeZ);
-                                pb.setFence(signShop.fence);
-                                sellPB(event.getPlayer(), pb, signShop.price);
-                            }
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    if (event.getClickedBlock().getType() == Material.WALL_SIGN
+                            || event.getClickedBlock().getType() == Material.SIGN_POST) {
+                        Sign sign = (Sign) event.getClickedBlock().getState();
+                        SignShop signShop = parseSign(sign.getLines());
+                        if (signShop.isValid()) {
+                            ProtectionBlock pb = plugin.pm.generateBlock(
+                                    signShop.material,
+                                    null, ownerName, signShop.sizeX,
+                                    signShop.sizeY, signShop.sizeZ);
+                            pb.setFence(signShop.fence);
+                            sellPB(event.getPlayer(), pb, signShop.price);
                         }
                     }
                 }
@@ -235,13 +229,10 @@ public class Shop {
     }
 
     private void strike(final Sign sign, final int lineNumber) {
-        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-            @Override
-            public void run() {
-                sign.setLine(lineNumber, ChatColor.STRIKETHROUGH
-                        + sign.getLine(lineNumber));
-                sign.update();
-            }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            sign.setLine(lineNumber, ChatColor.STRIKETHROUGH
+                    + sign.getLine(lineNumber));
+            sign.update();
         }, 2);
     }
 
@@ -254,37 +245,31 @@ public class Shop {
         }
         sizeLine = sizeLine + signShop.sizeZ;
         final String finalSizeLine = sizeLine;
-        Bukkit.getScheduler().runTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                sign.setLine(1, finalSizeLine);
-                sign.setLine(2, "$ "
-                        + String.format("%."
-                                + priceDecimals + "f", signShop.price));
-                sign.setLine(3, signShop.material.name());
-                sign.update();
-            }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            sign.setLine(1, finalSizeLine);
+            sign.setLine(2, "$ "
+                    + String.format("%."
+                            + priceDecimals + "f", signShop.price));
+            sign.setLine(3, signShop.material.name());
+            sign.update();
         });
     }
 
     public void sellPB(final Player player, final ProtectionBlock pb,
             final double price) {
-        Bukkit.getScheduler().runTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                if (plugin.getEco().getBalance(player) < price) {
-                    plugin.sendMessage(player,
-                            ChatColor.RED + tm.getText("not_enough_money"));
-                    plugin.pm.removePb(pb);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (plugin.getEco().getBalance(player) < price) {
+                plugin.sendMessage(player,
+                        ChatColor.RED + tm.getText("not_enough_money"));
+                plugin.pm.removePb(pb);
+            } else {
+                if (player.getInventory().addItem(pb.getItemStack()).isEmpty()) {
+                    plugin.getEco().withdrawPlayer(player, price);
+                    plugin.sendMessage(player, tm.getText("pb-bought"));
                 } else {
-                    if (player.getInventory().addItem(pb.getItemStack()).isEmpty()) {
-                        plugin.getEco().withdrawPlayer(player, price);
-                        plugin.sendMessage(player, tm.getText("pb-bought"));
-                    } else {
-                        plugin.sendMessage(player,
-                                ChatColor.RED + tm.getText("not_inventory_space"));
-                        plugin.pm.removePb(pb);
-                    }
+                    plugin.sendMessage(player,
+                            ChatColor.RED + tm.getText("not_inventory_space"));
+                    plugin.pm.removePb(pb);
                 }
             }
         });

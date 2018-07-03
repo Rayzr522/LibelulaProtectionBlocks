@@ -90,17 +90,12 @@ public class WorldGuardManager {
     public void initialize() {
         Plugin wgPlugin;
         wgPlugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
-        if (wgPlugin == null || !(wgPlugin instanceof WorldGuardPlugin)) {
+        if (!(wgPlugin instanceof WorldGuardPlugin)) {
             this.wgp = null;
         } else {
             wgp = (WorldGuardPlugin) wgPlugin;
             container = wgp.getRegionContainer();
-            Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    reloadConfig();
-                }
-            });
+            Bukkit.getScheduler().runTask(plugin, this::reloadConfig);
         }
     }
 
@@ -191,43 +186,34 @@ public class WorldGuardManager {
     public void createRegion(final ProtectionBlock pb) {
         final RegionManager regions = container.get(pb.getLocation().getWorld());
         if (regions != null) {
-            Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    regions.addRegion(pb.getPcr());
-                    try {
-                        regions.save();
-                    } catch (StorageException ex) {
-                        plugin.alert(tm.getText("unexpected_error",
-                                ex.getMessage()));
-                    }
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                regions.addRegion(pb.getPcr());
+                try {
+                    regions.save();
+                } catch (StorageException ex) {
+                    plugin.alert(tm.getText("unexpected_error",
+                            ex.getMessage()));
                 }
             });
         }
     }
 
     public void removeRegion(final ProtectionBlock pb) {
-        Bukkit.getScheduler().runTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                final RegionManager regions = container.get(pb.getLocation().getWorld());
-                if (regions != null) {
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            if (pb.getPcr() != null) {
-                                regions.removeRegion(pb.getPcr().getId());
-                            }
-                            pb.setLocation(null);
-                            try {
-                                regions.save();
-                            } catch (StorageException ex) {
-                                plugin.alert(tm.getText("unexpected_error",
-                                        ex.getMessage()));
-                            }
-                        }
-                    });
-                }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            final RegionManager regions = container.get(pb.getLocation().getWorld());
+            if (regions != null) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (pb.getPcr() != null) {
+                        regions.removeRegion(pb.getPcr().getId());
+                    }
+                    pb.setLocation(null);
+                    try {
+                        regions.save();
+                    } catch (StorageException ex) {
+                        plugin.alert(tm.getText("unexpected_error",
+                                ex.getMessage()));
+                    }
+                });
             }
         });
     }
@@ -250,15 +236,9 @@ public class WorldGuardManager {
          */
         // As WG API sucks I will implement this function using
         // WG plugin commands. I hope to fix this one of those days...
-        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-            @Override
-            public void run() {
-                Bukkit.dispatchCommand(plugin.getConsole(),
-                        "region flag -w " + world.getName() + " "
-                        + pr.getId() + " " + flag.getName() + " " + value);
-
-            }
-        }, 2);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> Bukkit.dispatchCommand(plugin.getConsole(),
+                "region flag -w " + world.getName() + " "
+                + pr.getId() + " " + flag.getName() + " " + value), 2);
 
     }
 
@@ -278,12 +258,9 @@ public class WorldGuardManager {
     }
 
     public void addMemberPlayer(final ProtectedRegion pr, final String playerName) {
-        Bukkit.getScheduler().runTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                DefaultDomain dd = pr.getMembers();
-                dd.addPlayer(playerName);
-            }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            DefaultDomain dd = pr.getMembers();
+            dd.addPlayer(playerName);
         });
     }
 

@@ -78,102 +78,96 @@ public class ProtectionStonesImporter {
 
     @SuppressWarnings("deprecation")
     public void importFromOldPS() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-            @Override
-            public void run() {
-                TreeMap<Integer, Material> materials = new TreeMap<>();
-                File psConfigFile = new File("plugins/ProtectionStones/config.yml");
-                if (psConfigFile.exists()) {
-                    FileConfiguration psConfig
-                            = YamlConfiguration.loadConfiguration(psConfigFile);
-                    for (String blockLine : psConfig.getStringList("Blocks")) {
-                        try {
-                            Material material = Material.getMaterial(blockLine.split(" ")[0]);
-                            int size = Integer.parseInt(blockLine.split(" ")[1]);
-                            materials.put(size, material);
-                        } catch (Exception ex) {
-                            plugin.logTranslated("error_importing_block_list", ex.getMessage());
-                        }
-                    }
-                    for (World world : plugin.getWG().getRegionManagers().keySet()) {
-                        plugin.logTranslated("importing_from_world", world.getName());
-                        int nextRun = 0;
-                        for (final String regionId : plugin.getWG().getRegionsIDs(world)) {
-                            if (regionId.matches(regionIdRegexp)) {
-                                nextRun++;
-                                Matcher m = regex.matcher(regionId);
-                                m.find();
-                                int x = Integer.parseInt(m.group());
-                                m.find();
-                                int y = Integer.parseInt(m.group());
-                                m.find();
-                                int z = Integer.parseInt(m.group());
-                                final Location psLocation = new Location(world, x, y, z);
-
-                                final ProtectionBlock pb = new ProtectionBlock(plugin);
-
-                                final ProtectedCuboidRegion pcr = (ProtectedCuboidRegion) plugin.getWG().getPcr(world, regionId);
-
-                                final int size = (pcr.getMaximumPoint().getBlockX()
-                                        - pcr.getMinimumPoint().getBlockX()) + 1;
-                                final Material mat = materials.getOrDefault(size - 1, Material.COAL_ORE);
-                                final ItemStack is = new ItemStack(mat, 1);
-                                UUID playerUid = null;
-                                String playerName = null;
-                                try {
-                                    playerUid = pcr.getOwners().getUniqueIds().iterator().next();
-                                } catch (NoSuchElementException e) {
-                                    playerName = pcr.getOwners().getPlayers().iterator().next();
-                                }
-                                if (playerUid != null) {
-                                    pb.setPlayerUUID(playerUid);
-                                    pb.setPlayerName(Bukkit.getPlayer(playerUid).getName());
-                                } else {
-                                    pb.setPlayerName(playerName);
-                                    pb.setPlayerUUID(Bukkit.getOfflinePlayer(playerName).getUniqueId());
-                                }
-
-                                Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-                                    @Override
-                                    public void run() {
-
-                                        ItemMeta dtMeta = is.getItemMeta();
-                                        pb.setName(plugin.tm.getText("protection_block_name",
-                                                Integer.toString(size),
-                                                Integer.toString(size),
-                                                Integer.toString(size)));
-                                        dtMeta.setDisplayName(pb.getName());
-                                        is.setItemMeta(dtMeta);
-                                        pb.setItemStack(is);
-                                        pb.setPcr(pcr);
-                                        pb.setSizeX(size);
-                                        pb.setSizeY(size);
-                                        pb.setSizeZ(size);
-                                        List<String> loreText = new ArrayList<>();
-                                        loreText.add(plugin.tm.getText("created_by", "ProtectionBlocks"));
-                                        loreText.add(pb.getUuid().toString().substring(0, 18));
-                                        loreText.add(pb.getUuid().toString().substring(19));
-
-                                        pb.setLoreText(loreText);
-                                        pb.setLocation(psLocation);
-                                        pb.setHiden(!psLocation.getBlock().getType().equals(mat));
-                                        plugin.pm.addPlacedPb(pb);
-                                        plugin.logTranslated("imported_ps_block", regionId);
-
-                                    }
-                                }, nextRun);
-                            }
-                        }
-                    }
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            TreeMap<Integer, Material> materials = new TreeMap<>();
+            File psConfigFile = new File("plugins/ProtectionStones/config.yml");
+            if (psConfigFile.exists()) {
+                FileConfiguration psConfig
+                        = YamlConfiguration.loadConfiguration(psConfigFile);
+                for (String blockLine : psConfig.getStringList("Blocks")) {
                     try {
-                        migrationTest.createNewFile();
-                    } catch (IOException ex) {
-                        Logger.getLogger(ProtectionStonesImporter.class.getName()).log(Level.SEVERE, null, ex);
+                        Material material = Material.getMaterial(blockLine.split(" ")[0]);
+                        int size = Integer.parseInt(blockLine.split(" ")[1]);
+                        materials.put(size, material);
+                    } catch (Exception ex) {
+                        plugin.logTranslated("error_importing_block_list", ex.getMessage());
                     }
-                    plugin.logTranslated("import_finished");
-                    plugin.reloadConfig();
-
                 }
+                for (World world : plugin.getWG().getRegionManagers().keySet()) {
+                    plugin.logTranslated("importing_from_world", world.getName());
+                    int nextRun = 0;
+                    for (final String regionId : plugin.getWG().getRegionsIDs(world)) {
+                        if (regionId.matches(regionIdRegexp)) {
+                            nextRun++;
+                            Matcher m = regex.matcher(regionId);
+                            m.find();
+                            int x = Integer.parseInt(m.group());
+                            m.find();
+                            int y = Integer.parseInt(m.group());
+                            m.find();
+                            int z = Integer.parseInt(m.group());
+                            final Location psLocation = new Location(world, x, y, z);
+
+                            final ProtectionBlock pb = new ProtectionBlock(plugin);
+
+                            final ProtectedCuboidRegion pcr = (ProtectedCuboidRegion) plugin.getWG().getPcr(world, regionId);
+
+                            final int size = (pcr.getMaximumPoint().getBlockX()
+                                    - pcr.getMinimumPoint().getBlockX()) + 1;
+                            final Material mat = materials.getOrDefault(size - 1, Material.COAL_ORE);
+                            final ItemStack is = new ItemStack(mat, 1);
+                            UUID playerUid = null;
+                            String playerName = null;
+                            try {
+                                playerUid = pcr.getOwners().getUniqueIds().iterator().next();
+                            } catch (NoSuchElementException e) {
+                                playerName = pcr.getOwners().getPlayers().iterator().next();
+                            }
+                            if (playerUid != null) {
+                                pb.setPlayerUUID(playerUid);
+                                pb.setPlayerName(Bukkit.getPlayer(playerUid).getName());
+                            } else {
+                                pb.setPlayerName(playerName);
+                                pb.setPlayerUUID(Bukkit.getOfflinePlayer(playerName).getUniqueId());
+                            }
+
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+
+                                ItemMeta dtMeta = is.getItemMeta();
+                                pb.setName(plugin.tm.getText("protection_block_name",
+                                        Integer.toString(size),
+                                        Integer.toString(size),
+                                        Integer.toString(size)));
+                                dtMeta.setDisplayName(pb.getName());
+                                is.setItemMeta(dtMeta);
+                                pb.setItemStack(is);
+                                pb.setPcr(pcr);
+                                pb.setSizeX(size);
+                                pb.setSizeY(size);
+                                pb.setSizeZ(size);
+                                List<String> loreText = new ArrayList<>();
+                                loreText.add(plugin.tm.getText("created_by", "ProtectionBlocks"));
+                                loreText.add(pb.getUuid().toString().substring(0, 18));
+                                loreText.add(pb.getUuid().toString().substring(19));
+
+                                pb.setLoreText(loreText);
+                                pb.setLocation(psLocation);
+                                pb.setHiden(!psLocation.getBlock().getType().equals(mat));
+                                plugin.pm.addPlacedPb(pb);
+                                plugin.logTranslated("imported_ps_block", regionId);
+
+                            }, nextRun);
+                        }
+                    }
+                }
+                try {
+                    migrationTest.createNewFile();
+                } catch (IOException ex) {
+                    Logger.getLogger(ProtectionStonesImporter.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                plugin.logTranslated("import_finished");
+                plugin.reloadConfig();
+
             }
         });
     }
